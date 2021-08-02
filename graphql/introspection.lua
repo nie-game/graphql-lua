@@ -1,17 +1,17 @@
-local path = (...):gsub('%.[^%.]+$', '')
-local types = require(path .. '.types')
-local util = require(path .. '.util')
+local path = (...):gsub("%.[^%.]+$", "")
+local types = require(path .. ".types")
+local util = require(path .. ".util")
 
-local __Schema, __Directive, __DirectiveLocation, __Type, __Field, __InputValue,__EnumValue, __TypeKind
+local __Schema, __Directive, __DirectiveLocation, __Type, __Field, __InputValue, __EnumValue, __TypeKind
 
 local function resolveArgs(field)
   local function transformArg(arg, name)
     if arg.__type then
-      return { kind = arg, name = name }
+      return {kind = arg, name = name}
     elseif arg.name then
       return arg
     else
-      local result = { name = name }
+      local result = {name = name}
 
       for k, v in pairs(arg) do
         result[k] = v
@@ -25,9 +25,9 @@ local function resolveArgs(field)
 end
 
 __Schema = types.object({
-  name = '__Schema',
+  name = "__Schema",
 
-  description = util.trim [[
+  description = util.trim[[
     A GraphQL Schema defines the capabilities of a GraphQL server. It exposes all available types
     and directives on the server, as well as the entry points for query and mutation operations.
   ]],
@@ -35,52 +35,52 @@ __Schema = types.object({
   fields = function()
     return {
       types = {
-        description = 'A list of all types supported by this server.',
+        description = "A list of all types supported by this server.",
         kind = types.nonNull(types.list(types.nonNull(__Type))),
         resolve = function(schema)
           return util.values(schema:getTypeMap())
-        end
+        end,
       },
 
       queryType = {
-        description = 'The type that query operations will be rooted at.',
+        description = "The type that query operations will be rooted at.",
         kind = __Type.nonNull,
         resolve = function(schema)
           return schema:getQueryType()
-        end
+        end,
       },
 
       mutationType = {
-        description = 'If this server supports mutation, the type that mutation operations will be rooted at.',
+        description = "If this server supports mutation, the type that mutation operations will be rooted at.",
         kind = __Type,
         resolve = function(schema)
           return schema:getMutationType()
-        end
+        end,
       },
 
       directives = {
-        description = 'A list of all directives supported by this server.',
+        description = "A list of all directives supported by this server.",
         kind = types.nonNull(types.list(types.nonNull(__Directive))),
         resolve = function(schema)
           return schema.directives
-        end
+        end,
       },
 
       subscriptionType = {
-        description = 'If this server supports subscriptions, the type that subscription operations will be rooted at.',
+        description = "If this server supports subscriptions, the type that subscription operations will be rooted at.",
         kind = __Type,
         resolve = function(schema)
           return schema:getSubscriptionType()
-        end
-       }
+        end,
+      },
     }
-  end
+  end,
 })
 
 __Directive = types.object({
-  name = '__Directive',
+  name = "__Directive",
 
-  description = util.trim [[
+  description = util.trim[[
     A Directive provides a way to describe alternate runtime execution and type validation behavior
     in a GraphQL document.
 
@@ -96,76 +96,65 @@ __Directive = types.object({
       description = types.string,
 
       locations = {
-        kind = types.nonNull(types.list(types.nonNull(
-          __DirectiveLocation
-        ))),
+        kind = types.nonNull(types.list(types.nonNull(__DirectiveLocation))),
         resolve = function(directive)
           local res = {}
 
-          if directive.onQuery then table.insert(res, 'QUERY') end
-          if directive.onMutation then table.insert(res, 'MUTATION') end
-          if directive.onField then table.insert(res, 'FIELD') end
-          if directive.onFragmentDefinition then table.insert(res, 'FRAGMENT_DEFINITION') end
-          if directive.onFragmentSpread then table.insert(res, 'FRAGMENT_SPREAD') end
-          if directive.onInlineFragment then table.insert(res, 'INLINE_FRAGMENT') end
+          if directive.onQuery then
+            table.insert(res, "QUERY")
+          end
+          if directive.onMutation then
+            table.insert(res, "MUTATION")
+          end
+          if directive.onField then
+            table.insert(res, "FIELD")
+          end
+          if directive.onFragmentDefinition then
+            table.insert(res, "FRAGMENT_DEFINITION")
+          end
+          if directive.onFragmentSpread then
+            table.insert(res, "FRAGMENT_SPREAD")
+          end
+          if directive.onInlineFragment then
+            table.insert(res, "INLINE_FRAGMENT")
+          end
 
           return res
-        end
+        end,
       },
 
-      args = {
-        kind = types.nonNull(types.list(types.nonNull(__InputValue))),
-        resolve = resolveArgs
-      }
+      args = {kind = types.nonNull(types.list(types.nonNull(__InputValue))), resolve = resolveArgs},
     }
-  end
+  end,
 })
 
 __DirectiveLocation = types.enum({
-  name = '__DirectiveLocation',
+  name = "__DirectiveLocation",
 
-  description = util.trim [[
+  description = util.trim[[
     A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation
     describes one such possible adjacencies.
   ]],
 
   values = {
-    QUERY = {
-      value = 'QUERY',
-      description = 'Location adjacent to a query operation.'
-    },
+    QUERY = {value = "QUERY", description = "Location adjacent to a query operation."},
 
-    MUTATION = {
-      value = 'MUTATION',
-      description = 'Location adjacent to a mutation operation.'
-    },
+    MUTATION = {value = "MUTATION", description = "Location adjacent to a mutation operation."},
 
-    FIELD = {
-      value = 'FIELD',
-      description = 'Location adjacent to a field.'
-    },
+    FIELD = {value = "FIELD", description = "Location adjacent to a field."},
 
-    FRAGMENT_DEFINITION = {
-      value = 'FRAGMENT_DEFINITION',
-      description = 'Location adjacent to a fragment definition.'
-    },
+    FRAGMENT_DEFINITION = {value = "FRAGMENT_DEFINITION", description = "Location adjacent to a fragment definition."},
 
-    FRAGMENT_SPREAD = {
-      value = 'FRAGMENT_SPREAD',
-      description = 'Location adjacent to a fragment spread.'
-    },
+    FRAGMENT_SPREAD = {value = "FRAGMENT_SPREAD", description = "Location adjacent to a fragment spread."},
 
-    INLINE_FRAGMENT = {
-      value = 'INLINE_FRAGMENT',
-      description = 'Location adjacent to an inline fragment.'
-    }
-  }
+    INLINE_FRAGMENT = {value = "INLINE_FRAGMENT", description = "Location adjacent to an inline fragment."},
+  },
 })
 
 __Type = types.object({
-  name = '__Type',
+  name = "__Type",
 
-  description = util.trim [[
+  description = util.trim[[
     The fundamental unit of any GraphQL Schema is the type. There are
     many kinds of types in GraphQL as represented by the `__TypeKind` enum.
 
@@ -185,99 +174,90 @@ __Type = types.object({
       kind = {
         kind = __TypeKind.nonNull,
         resolve = function(kind)
-          if kind.__type == 'Scalar' then
-            return 'SCALAR'
-          elseif kind.__type == 'Object' then
-            return 'OBJECT'
-          elseif kind.__type == 'Interface' then
-            return 'INTERFACE'
-          elseif kind.__type == 'Union' then
-            return 'UNION'
-          elseif kind.__type == 'Enum' then
-            return 'ENUM'
-          elseif kind.__type == 'InputObject' then
-            return 'INPUT_OBJECT'
-          elseif kind.__type == 'List' then
-            return 'LIST'
-          elseif kind.__type == 'NonNull' then
-            return 'NON_NULL'
+          if kind.__type == "Scalar" then
+            return "SCALAR"
+          elseif kind.__type == "Object" then
+            return "OBJECT"
+          elseif kind.__type == "Interface" then
+            return "INTERFACE"
+          elseif kind.__type == "Union" then
+            return "UNION"
+          elseif kind.__type == "Enum" then
+            return "ENUM"
+          elseif kind.__type == "InputObject" then
+            return "INPUT_OBJECT"
+          elseif kind.__type == "List" then
+            return "LIST"
+          elseif kind.__type == "NonNull" then
+            return "NON_NULL"
           end
 
-          error('Unknown type ' .. kind)
-        end
+          error("Unknown type " .. kind)
+        end,
       },
 
       fields = {
         kind = types.list(types.nonNull(__Field)),
-        arguments = {
-          includeDeprecated = {
-            kind = types.boolean,
-            defaultValue = false
-          }
-        },
+        arguments = {includeDeprecated = {kind = types.boolean, defaultValue = false}},
         resolve = function(kind, arguments)
-          if kind.__type == 'Object' or kind.__type == 'Interface' then
+          if kind.__type == "Object" or kind.__type == "Interface" then
             return util.filter(util.values(kind.fields), function(field)
               return arguments.includeDeprecated or field.deprecationReason == nil
             end)
           end
 
           return nil
-        end
+        end,
       },
 
       interfaces = {
         kind = types.list(types.nonNull(__Type)),
         resolve = function(kind)
-          if kind.__type == 'Object' then
+          if kind.__type == "Object" then
             return kind.interfaces
           end
-        end
+        end,
       },
 
       possibleTypes = {
         kind = types.list(types.nonNull(__Type)),
         resolve = function(kind, arguments, context)
-          if kind.__type == 'Interface' or kind.__type == 'Union' then
+          if kind.__type == "Interface" or kind.__type == "Union" then
             return context.schema:getPossibleTypes(kind)
           end
-        end
+        end,
       },
 
       enumValues = {
         kind = types.list(types.nonNull(__EnumValue)),
-        arguments = {
-          includeDeprecated = { kind = types.boolean, defaultValue = false }
-        },
+        arguments = {includeDeprecated = {kind = types.boolean, defaultValue = false}},
         resolve = function(kind, arguments)
-          if kind.__type == 'Enum' then
+          if kind.__type == "Enum" then
             return util.filter(util.values(kind.values), function(value)
               return arguments.includeDeprecated or not value.deprecationReason
             end)
           end
-        end
+        end,
       },
 
       inputFields = {
         kind = types.list(types.nonNull(__InputValue)),
         resolve = function(kind)
-          if kind.__type == 'InputObject' then
+          if kind.__type == "InputObject" then
             return util.values(kind.fields)
           end
-        end
+        end,
       },
 
-      ofType = {
-        kind = __Type
-      }
+      ofType = {kind = __Type},
     }
-  end
+  end,
 })
 
 __Field = types.object({
-  name = '__Field',
+  name = "__Field",
 
-  description = util.trim [[
+  description = util.trim[[
     Object and Interface types are described by a list of Fields, each of
     which has a name, potentially a list of arguments, and a return type.
   ]],
@@ -287,34 +267,31 @@ __Field = types.object({
       name = types.string.nonNull,
       description = types.string,
 
-      args = {
-        kind = types.nonNull(types.list(types.nonNull(__InputValue))),
-        resolve = resolveArgs
-      },
+      args = {kind = types.nonNull(types.list(types.nonNull(__InputValue))), resolve = resolveArgs},
 
       type = {
         kind = __Type.nonNull,
         resolve = function(field)
           return field.kind
-        end
+        end,
       },
 
       isDeprecated = {
         kind = types.boolean.nonNull,
         resolve = function(field)
           return field.deprecationReason ~= nil
-        end
+        end,
       },
 
-      deprecationReason = types.string
+      deprecationReason = types.string,
     }
-  end
+  end,
 })
 
 __InputValue = types.object({
-  name = '__InputValue',
+  name = "__InputValue",
 
-  description = util.trim [[
+  description = util.trim[[
     Arguments provided to Fields or Directives and the input fields of an
     InputObject are represented as Input Values which describe their type
     and optionally a default value.
@@ -329,24 +306,24 @@ __InputValue = types.object({
         kind = types.nonNull(__Type),
         resolve = function(field)
           return field.kind
-        end
+        end,
       },
 
       defaultValue = {
         kind = types.string,
-        description = 'A GraphQL-formatted string representing the default value for this input value.',
+        description = "A GraphQL-formatted string representing the default value for this input value.",
         resolve = function(inputVal)
           return inputVal.defaultValue and tostring(inputVal.defaultValue) -- TODO improve serialization a lot
-        end
-      }
+        end,
+      },
     }
-  end
+  end,
 })
 
 __EnumValue = types.object({
-  name = '__EnumValue',
+  name = "__EnumValue",
 
-  description = util.trim [[
+  description = util.trim[[
     One possible value for a given Enum. Enum values are unique values, not
     a placeholder for a string or numeric value. However an Enum value is
     returned in a JSON response as a string.
@@ -358,89 +335,74 @@ __EnumValue = types.object({
       description = types.string,
       isDeprecated = {
         kind = types.boolean.nonNull,
-        resolve = function(enumValue) return enumValue.deprecationReason ~= nil end
+        resolve = function(enumValue)
+          return enumValue.deprecationReason ~= nil
+        end,
       },
-      deprecationReason = types.string
+      deprecationReason = types.string,
     }
-  end
+  end,
 })
 
 __TypeKind = types.enum({
-  name = '__TypeKind',
-  description = 'An enum describing what kind of type a given `__Type` is.',
+  name = "__TypeKind",
+  description = "An enum describing what kind of type a given `__Type` is.",
   values = {
-    SCALAR = {
-      value = 'SCALAR',
-      description = 'Indicates this type is a scalar.'
-    },
+    SCALAR = {value = "SCALAR", description = "Indicates this type is a scalar."},
 
     OBJECT = {
-      value = 'OBJECT',
-      description = 'Indicates this type is an object. `fields` and `interfaces` are valid fields.'
+      value = "OBJECT",
+      description = "Indicates this type is an object. `fields` and `interfaces` are valid fields.",
     },
 
     INTERFACE = {
-      value = 'INTERFACE',
-      description = 'Indicates this type is an interface. `fields` and `possibleTypes` are valid fields.'
+      value = "INTERFACE",
+      description = "Indicates this type is an interface. `fields` and `possibleTypes` are valid fields.",
     },
 
-    UNION = {
-      value = 'UNION',
-      description = 'Indicates this type is a union. `possibleTypes` is a valid field.'
-    },
+    UNION = {value = "UNION", description = "Indicates this type is a union. `possibleTypes` is a valid field."},
 
-    ENUM = {
-      value = 'ENUM',
-      description = 'Indicates this type is an enum. `enumValues` is a valid field.'
-    },
+    ENUM = {value = "ENUM", description = "Indicates this type is an enum. `enumValues` is a valid field."},
 
     INPUT_OBJECT = {
-      value = 'INPUT_OBJECT',
-      description = 'Indicates this type is an input object. `inputFields` is a valid field.'
+      value = "INPUT_OBJECT",
+      description = "Indicates this type is an input object. `inputFields` is a valid field.",
     },
 
-    LIST = {
-      value = 'LIST',
-      description = 'Indicates this type is a list. `ofType` is a valid field.'
-    },
+    LIST = {value = "LIST", description = "Indicates this type is a list. `ofType` is a valid field."},
 
-    NON_NULL = {
-      value = 'NON_NULL',
-      description = 'Indicates this type is a non-null. `ofType` is a valid field.'
-    }
-  }
+    NON_NULL = {value = "NON_NULL", description = "Indicates this type is a non-null. `ofType` is a valid field."},
+  },
 })
 
 local Schema = {
-  name = '__schema',
+  name = "__schema",
   kind = __Schema.nonNull,
-  description = 'Access the current type schema of this server.',
+  description = "Access the current type schema of this server.",
   arguments = {},
   resolve = function(_, _, info)
     return info.schema
-  end
+  end,
 }
 
 local Type = {
-  name = '__type',
+  name = "__type",
   kind = __Type,
-  description = 'Request the type information of a single type.',
-  arguments = {
-    name = types.string.nonNull
-  },
+  description = "Request the type information of a single type.",
+  arguments = {name = types.string.nonNull},
   resolve = function(_, arguments, info)
     return info.schema:getType(arguments.name)
-  end
+  end,
 }
 
 local TypeName = {
-  name = '__typename',
+  name = "__typename",
   kind = types.string.nonNull,
-  description = 'The name of the current Object type at runtime.',
+  description = "The name of the current Object type at runtime.",
   arguments = {},
   resolve = function(_, _, info)
     return info.parentType.name
-  end
+  end,
 }
 
 return {
@@ -454,9 +416,5 @@ return {
   Schema = Schema,
   Type = Type,
   TypeName = TypeName,
-  fieldMap = {
-    __schema = Schema,
-    __type = Type,
-    __typename = TypeName
-  }
+  fieldMap = {__schema = Schema, __type = Type, __typename = TypeName},
 }

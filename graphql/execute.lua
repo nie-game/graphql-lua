@@ -1,18 +1,18 @@
-local path = (...):gsub('%.[^%.]+$', '')
-local types = require(path .. '.types')
-local util = require(path .. '.util')
-local introspection = require(path .. '.introspection')
+local path = (...):gsub("%.[^%.]+$", "")
+local types = require(path .. ".types")
+local util = require(path .. ".util")
+local introspection = require(path .. ".introspection")
 
 local function typeFromAST(node, schema)
   local innerType
-  if node.kind == 'listType' then
+  if node.kind == "listType" then
     innerType = typeFromAST(node.type)
     return innerType and types.list(innerType)
-  elseif node.kind == 'nonNullType' then
+  elseif node.kind == "nonNullType" then
     innerType = typeFromAST(node.type)
     return innerType and types.nonNull(innerType)
   else
-    assert(node.kind == 'namedType', 'Variable must be a named type')
+    assert(node.kind == "namedType", "Variable must be a named type")
     return schema:getType(node.name.value)
   end
 end
@@ -28,35 +28,45 @@ local function shouldIncludeNode(selection, context)
         return directive.name.value == key
       end)
 
-      if not directive then return end
+      if not directive then
+        return
+      end
 
       local ifArgument = util.find(directive.arguments, function(argument)
-        return argument.name.value == 'if'
+        return argument.name.value == "if"
       end)
 
-      if not ifArgument then return end
+      if not ifArgument then
+        return
+      end
 
-      return util.coerceValue(ifArgument.value, _type.arguments['if'], context.variables)
+      return util.coerceValue(ifArgument.value, _type.arguments["if"], context.variables)
     end
 
-    if isDirectiveActive('skip', types.skip) then return false end
-    if isDirectiveActive('include', types.include) == false then return false end
+    if isDirectiveActive("skip", types.skip) then
+      return false
+    end
+    if isDirectiveActive("include", types.include) == false then
+      return false
+    end
   end
 
   return true
 end
 
 local function doesFragmentApply(fragment, type, context)
-  if not fragment.typeCondition then return true end
+  if not fragment.typeCondition then
+    return true
+  end
 
   local innerType = typeFromAST(fragment.typeCondition, context.schema)
 
   if innerType == type then
     return true
-  elseif innerType.__type == 'Interface' then
+  elseif innerType.__type == "Interface" then
     local implementors = context.schema:getImplementors(innerType.name)
     return implementors and implementors[type]
-  elseif innerType.__type == 'Union' then
+  elseif innerType.__type == "Union" then
     return util.find(innerType.types, function(member)
       return member == type
     end)
@@ -83,33 +93,27 @@ local function defaultResolver(object, arguments, info)
 end
 
 local function buildContext(schema, tree, rootValue, variables, operationName)
-  local context = {
-    schema = schema,
-    rootValue = rootValue,
-    variables = variables,
-    operation = nil,
-    fragmentMap = {}
-  }
+  local context = {schema = schema, rootValue = rootValue, variables = variables, operation = nil, fragmentMap = {}}
 
   for _, definition in ipairs(tree.definitions) do
-    if definition.kind == 'operation' then
+    if definition.kind == "operation" then
       if not operationName and context.operation then
-        error('Operation name must be specified if more than one operation exists.')
+        error("Operation name must be specified if more than one operation exists.")
       end
 
       if not operationName or definition.name.value == operationName then
         context.operation = definition
       end
-    elseif definition.kind == 'fragmentDefinition' then
+    elseif definition.kind == "fragmentDefinition" then
       context.fragmentMap[definition.name.value] = definition
     end
   end
 
   if not context.operation then
     if operationName then
-      error('Unknown operation "' .. operationName .. '"')
+      error("Unknown operation \"" .. operationName .. "\"")
     else
-      error('Must provide an operation')
+      error("Must provide an operation")
     end
   end
 
@@ -118,17 +122,17 @@ end
 
 local function collectFields(objectType, selections, visitedFragments, result, context)
   for _, selection in ipairs(selections) do
-    if selection.kind == 'field' then
+    if selection.kind == "field" then
       if shouldIncludeNode(selection, context) then
         local name = getFieldResponseKey(selection)
         result[name] = result[name] or {}
         table.insert(result[name], selection)
       end
-    elseif selection.kind == 'inlineFragment' then
+    elseif selection.kind == "inlineFragment" then
       if shouldIncludeNode(selection, context) and doesFragmentApply(selection, objectType, context) then
         collectFields(objectType, selection.selectionSet.selections, visitedFragments, result, context)
       end
-    elseif selection.kind == 'fragmentSpread' then
+    elseif selection.kind == "fragmentSpread" then
       local fragmentName = selection.name.value
       if shouldIncludeNode(selection, context) and not visitedFragments[fragmentName] then
         visitedFragments[fragmentName] = true
@@ -148,12 +152,12 @@ local evaluateSelections
 local function completeValue(fieldType, result, subSelections, context)
   local fieldTypeName = fieldType.__type
 
-  if fieldTypeName == 'NonNull' then
+  if fieldTypeName == "NonNull" then
     local innerType = fieldType.ofType
     local completedResult = completeValue(innerType, result, subSelections, context)
 
     if completedResult == nil then
-      error('No value provided for non-null ' .. (innerType.name or innerType.__type))
+      error("No value provided for non-null " .. (innerType.name or innerType.__type))
     end
 
     return completedResult
@@ -163,11 +167,11 @@ local function completeValue(fieldType, result, subSelections, context)
     return nil
   end
 
-  if fieldTypeName == 'List' then
+  if fieldTypeName == "List" then
     local innerType = fieldType.ofType
 
-    if type(result) ~= 'table' then
-      error('Expected a table for ' .. innerType.name .. ' list')
+    if type(result) ~= "table" then
+      error("Expected a table for " .. innerType.name .. " list")
     end
 
     local values = {}
@@ -178,19 +182,19 @@ local function completeValue(fieldType, result, subSelections, context)
     return next(values) and values or context.schema.__emptyList
   end
 
-  if fieldTypeName == 'Scalar' or fieldTypeName == 'Enum' then
+  if fieldTypeName == "Scalar" or fieldTypeName == "Enum" then
     return fieldType.serialize(result)
   end
 
-  if fieldTypeName == 'Object' then
+  if fieldTypeName == "Object" then
     local fields = evaluateSelections(fieldType, result, subSelections, context)
     return next(fields) and fields or context.schema.__emptyObject
-  elseif fieldTypeName == 'Interface' or fieldTypeName == 'Union' then
+  elseif fieldTypeName == "Interface" or fieldTypeName == "Union" then
     local objectType = fieldType.resolveType(result)
     return evaluateSelections(objectType, result, subSelections, context)
   end
 
-  error('Unknown type "' .. fieldTypeName .. '" for field "' .. field.name .. '"')
+  error("Unknown type \"" .. fieldTypeName .. "\" for field \"" .. field.name .. "\"")
 end
 
 local function getFieldEntry(objectType, object, fields, context)
@@ -222,7 +226,7 @@ local function getFieldEntry(objectType, object, fields, context)
     fragments = context.fragmentMap,
     rootValue = context.rootValue,
     operation = context.operation,
-    variableValues = context.variables
+    variableValues = context.variables,
   }
 
   local resolvedObject = (fieldType.resolve or defaultResolver)(object, arguments, info)
@@ -244,7 +248,7 @@ return function(schema, tree, rootValue, variables, operationName)
   local rootType = schema[context.operation.operation]
 
   if not rootType then
-    error('Unsupported operation "' .. context.operation.operation .. '"')
+    error("Unsupported operation \"" .. context.operation.operation .. "\"")
   end
 
   return evaluateSelections(rootType, rootValue, context.operation.selectionSet.selections, context)

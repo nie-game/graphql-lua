@@ -1,6 +1,6 @@
-local path = (...):gsub('%.[^%.]+$', '')
-local types = require(path .. '.types')
-local introspection = require(path .. '.introspection')
+local path = (...):gsub("%.[^%.]+$", "")
+local types = require(path .. ".types")
+local introspection = require(path .. ".introspection")
 
 local schema = {}
 schema.__index = schema
@@ -9,8 +9,8 @@ schema.__emptyList = {}
 schema.__emptyObject = {}
 
 function schema.create(config)
-  assert(type(config.query) == 'table', 'must provide query object')
-  assert(not config.mutation or type(config.mutation) == 'table', 'mutation must be a table if provided')
+  assert(type(config.query) == "table", "must provide query object")
+  assert(not config.mutation or type(config.mutation) == "table", "mutation must be a table if provided")
 
   local self = setmetatable({}, schema)
 
@@ -18,10 +18,7 @@ function schema.create(config)
     self[k] = v
   end
 
-  self.directives = self.directives or {
-    types.include,
-    types.skip
-  }
+  self.directives = self.directives or {types.include, types.skip}
 
   self.typeMap = {}
   self.interfaceMap = {}
@@ -37,20 +34,22 @@ function schema.create(config)
 end
 
 function schema:generateTypeMap(node)
-  if not node or (self.typeMap[node.name] and self.typeMap[node.name] == node) then return end
+  if not node or (self.typeMap[node.name] and self.typeMap[node.name] == node) then
+    return
+  end
 
-  if node.__type == 'NonNull' or node.__type == 'List' then
+  if node.__type == "NonNull" or node.__type == "List" then
     return self:generateTypeMap(node.ofType)
   end
 
   if self.typeMap[node.name] and self.typeMap[node.name] ~= node then
-    error('Encountered multiple types named "' .. node.name .. '"')
+    error("Encountered multiple types named \"" .. node.name .. "\"")
   end
 
-  node.fields = type(node.fields) == 'function' and node.fields() or node.fields
+  node.fields = type(node.fields) == "function" and node.fields() or node.fields
   self.typeMap[node.name] = node
 
-  if node.__type == 'Object' and node.interfaces then
+  if node.__type == "Object" and node.interfaces then
     for _, interface in ipairs(node.interfaces) do
       self:generateTypeMap(interface)
       self.interfaceMap[interface.name] = self.interfaceMap[interface.name] or {}
@@ -58,12 +57,12 @@ function schema:generateTypeMap(node)
     end
   end
 
-  if node.__type == 'Object' or node.__type == 'Interface' or node.__type == 'InputObject' then
+  if node.__type == "Object" or node.__type == "Interface" or node.__type == "InputObject" then
     for fieldName, field in pairs(node.fields) do
       if field.arguments then
         for name, argument in pairs(field.arguments) do
           local argumentType = argument.__type and argument or argument.kind
-          assert(argumentType, 'Must supply type for argument "' .. name .. '" on "' .. fieldName .. '"')
+          assert(argumentType, "Must supply type for argument \"" .. name .. "\" on \"" .. fieldName .. "\"")
           self:generateTypeMap(argumentType)
         end
       end
@@ -80,18 +79,22 @@ function schema:generateDirectiveMap()
 end
 
 function schema:getType(name)
-  if not name then return end
+  if not name then
+    return
+  end
   return self.typeMap[name]
 end
 
 function schema:getImplementors(interface)
   local kind = self:getType(interface)
-  local isInterface = kind and kind.__type == 'Interface'
+  local isInterface = kind and kind.__type == "Interface"
   return self.interfaceMap[interface] or (isInterface and {} or nil)
 end
 
 function schema:getDirective(name)
-  if not name then return false end
+  if not name then
+    return false
+  end
   return self.directiveMap[name]
 end
 
@@ -112,7 +115,7 @@ function schema:getTypeMap()
 end
 
 function schema:getPossibleTypes(abstractType)
-  if abstractType.__type == 'Union' then
+  if abstractType.__type == "Union" then
     return abstractType.types
   end
 
