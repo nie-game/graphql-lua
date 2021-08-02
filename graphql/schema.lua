@@ -57,6 +57,12 @@ function schema:generateTypeMap(node)
     end
   end
 
+  if node.__type == "Union" then
+    for _, interface in ipairs(node.types) do
+      self:generateTypeMap(interface)
+    end
+  end
+
   if node.__type == "Object" or node.__type == "Interface" or node.__type == "InputObject" then
     for fieldName, field in pairs(node.fields) do
       if field.arguments then

@@ -176,7 +176,10 @@ local function completeValue(fieldType, result, subSelections, context)
 
     local values = {}
     for i, value in ipairs(result) do
-      values[i] = completeValue(innerType, value, subSelections, context)
+      local t = completeValue(innerType, value, subSelections, context)
+      if (not fieldType.cullEmpty) or next(t) then
+        table.insert(values, t)
+      end
     end
 
     return next(values) and values or context.schema.__emptyList

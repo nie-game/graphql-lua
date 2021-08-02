@@ -214,8 +214,9 @@ __Type = types.object({
         kind = types.list(types.nonNull(__Type)),
         resolve = function(kind)
           if kind.__type == "Object" then
-            return kind.interfaces
+            return kind.interfaces or {}
           end
+          return {}
         end,
       },
 
