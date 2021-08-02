@@ -216,7 +216,6 @@ __Type = types.object({
           if kind.__type == "Object" then
             return kind.interfaces or {}
           end
-          return {}
         end,
       },
 
